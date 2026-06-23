@@ -2,14 +2,13 @@
 
 Es idempotente: si los datos ya existen, no los duplica.
 """
-from passlib.context import CryptContext
 from sqlalchemy import select
 
 from app.core.config import get_settings
+from app.core.security import hash_password
 from app.db import SessionLocal
 from app.models import Service, User, UserRole
 
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 settings = get_settings()
 
 # Servicios base: duración entre 30 y 60 min, con precio para la analítica.
@@ -35,7 +34,7 @@ def seed() -> None:
                     last_name=settings.admin_last_name,
                     phone="0000000000",
                     email=settings.admin_email,
-                    password_hash=pwd.hash(settings.admin_password),
+                    password_hash=hash_password(settings.admin_password),
                     role=UserRole.admin,
                 )
             )
