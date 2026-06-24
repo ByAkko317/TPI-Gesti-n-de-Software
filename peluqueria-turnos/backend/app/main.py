@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
+from app.routers import appointments, auth, services
 
 settings = get_settings()
 
@@ -23,4 +24,8 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# Los routers (auth, services, appointments, admin) se montan en próximas etapas.
+app.include_router(auth.router)
+app.include_router(services.router)
+app.include_router(appointments.router)
+
+# Los routers de services, appointments y admin se montan en próximas etapas.

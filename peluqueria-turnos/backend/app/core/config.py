@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     # CORS (frontend)
     frontend_origin: str = "http://localhost:5173"
 
+    # Reglas de negocio de turnos
+    # Horario de atención (hora local del negocio, formato 24h).
+    opening_hour: int = 9
+    closing_hour: int = 18
+    # Días abiertos: 0=lunes ... 6=domingo. Por defecto L-S (domingo cerrado).
+    open_weekdays: str = "0,1,2,3,4,5"
+    # Antelación mínima para reservar, en minutos.
+    min_advance_minutes: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:
