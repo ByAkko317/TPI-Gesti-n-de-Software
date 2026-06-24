@@ -2,13 +2,16 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Home } from "./pages/Home";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
 
-// Placeholders: las pantallas reales se construyen en las próximas sub-etapas.
+// Placeholders: las pantallas de turnos y panel se construyen en las próximas sub-etapas.
 function Placeholder({ title }: { title: string }) {
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <p className="mt-2 text-gray-500">Pantalla en construcción.</p>
+      <h1 className="font-display text-2xl font-500">{title}</h1>
+      <p className="mt-2 text-ink/60">Pantalla en construcción.</p>
     </div>
   );
 }
@@ -20,9 +23,9 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             {/* Públicas */}
-            <Route path="/" element={<Placeholder title="Inicio" />} />
-            <Route path="/login" element={<Placeholder title="Ingresar" />} />
-            <Route path="/register" element={<Placeholder title="Crear cuenta" />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Cliente y admin autenticados */}
             <Route
