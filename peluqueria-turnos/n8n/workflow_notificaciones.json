@@ -1,0 +1,96 @@
+{
+  "name": "Peluquería - Notificaciones (confirmación/cancelación)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "peluqueria-notificaciones",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-in",
+      "name": "Webhook (desde backend)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "peluqueria-notificaciones"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value2": "confirmation",
+              "output": 0
+            },
+            {
+              "value2": "cancellation",
+              "output": 1
+            }
+          ]
+        },
+        "value1": "={{ $json.body.event }}",
+        "dataType": "string"
+      },
+      "id": "switch-event",
+      "name": "Según evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "peluqueria@tudominio.com",
+        "toEmail": "={{ $json.body.client.email }}",
+        "subject": "Confirmación de tu turno",
+        "text": "=Hola {{ $json.body.client.first_name }},\n\nTu turno para \"{{ $json.body.service.name }}\" quedó confirmado para el {{ $json.body.appointment.start_at }}.\n\n¡Te esperamos!\nPeluquería",
+        "options": {}
+      },
+      "id": "mail-confirm",
+      "name": "Email confirmación",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [720, 200],
+      "credentials": {
+        "smtp": {
+          "id": "REEMPLAZAR_CREDENCIAL_SMTP",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "peluqueria@tudominio.com",
+        "toEmail": "={{ $json.body.client.email }}",
+        "subject": "Tu turno fue cancelado",
+        "text": "=Hola {{ $json.body.client.first_name }},\n\n{{ $json.body.appointment.cancelled_by === 'admin' ? 'Lamentamos informarte que la peluquería canceló tu turno' : 'Confirmamos que cancelaste tu turno' }} de \"{{ $json.body.service.name }}\" del {{ $json.body.appointment.start_at }}.\n\n{{ $json.body.appointment.cancellation_comment ? 'Comentario: ' + $json.body.appointment.cancellation_comment : '' }}\n\n{{ $json.body.appointment.cancelled_by === 'admin' ? 'Por favor, contáctanos para reprogramar.' : 'Podés sacar un nuevo turno cuando quieras.' }}\n\nPeluquería",
+        "options": {}
+      },
+      "id": "mail-cancel",
+      "name": "Email cancelación",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [720, 400],
+      "credentials": {
+        "smtp": {
+          "id": "REEMPLAZAR_CREDENCIAL_SMTP",
+          "name": "SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook (desde backend)": {
+      "main": [[{ "node": "Según evento", "type": "main", "index": 0 }]]
+    },
+    "Según evento": {
+      "main": [
+        [{ "node": "Email confirmación", "type": "main", "index": 0 }],
+        [{ "node": "Email cancelación", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["peluqueria"]
+}

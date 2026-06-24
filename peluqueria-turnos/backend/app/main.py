@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import appointments, auth, services, admin
+from app.routers import admin, appointments, auth, internal, services
 
 settings = get_settings()
 
@@ -28,5 +28,4 @@ app.include_router(auth.router)
 app.include_router(services.router)
 app.include_router(appointments.router)
 app.include_router(admin.router)
-
-# Los routers de services, appointments y admin se montan en próximas etapas.
+app.include_router(internal.router)

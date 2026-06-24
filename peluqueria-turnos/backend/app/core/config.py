@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     # Integración n8n (no bloqueante; se usa en la etapa de n8n)
     n8n_webhook_url: str | None = None
+    # Token compartido que n8n usa para llamar al endpoint de recordatorios.
+    internal_api_token: str = "change-me-internal-token"
 
     # CORS (frontend)
     frontend_origin: str = "http://localhost:5173"

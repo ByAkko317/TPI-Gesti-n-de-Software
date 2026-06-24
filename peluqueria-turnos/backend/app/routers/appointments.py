@@ -6,7 +6,7 @@ El control de permisos es por rol:
 """
 from datetime import date, datetime, time
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
@@ -25,6 +25,7 @@ from app.schemas.appointment import (
     AppointmentRead,
 )
 from app.services.availability import AvailabilityError, validate_new_appointment
+from app.services.notifications import notify
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -41,6 +42,7 @@ def _base_query():
 @router.post("", response_model=AppointmentRead, status_code=status.HTTP_201_CREATED)
 def create_appointment(
     data: AppointmentCreate,
+    background: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Appointment:
@@ -68,7 +70,8 @@ def create_appointment(
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
-    # TODO (etapa n8n): disparar webhook de confirmación (no bloqueante).
+    # Notificación de confirmación (no bloqueante, tras responder).
+    background.add_task(notify, "confirmation", appointment)
     return appointment
 
 
@@ -105,6 +108,7 @@ def list_appointments(
 def cancel_appointment(
     appointment_id: int,
     data: AppointmentCancel,
+    background: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Appointment:
@@ -145,5 +149,7 @@ def cancel_appointment(
     appointment.cancellation_comment = data.comment
     db.commit()
     db.refresh(appointment)
-    # TODO (etapa n8n): disparar webhook de cancelación con mensaje según quién canceló.
+    # Notificación de cancelación; el payload incluye 'cancelled_by' para que
+    # n8n use el mensaje correcto según quién canceló.
+    background.add_task(notify, "cancellation", appointment)
     return appointment

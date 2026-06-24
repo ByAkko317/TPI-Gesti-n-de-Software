@@ -28,6 +28,22 @@ services:
         condition: service_healthy
 
   # n8n se agrega en la etapa de automatización.
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      # Permite que el backend alcance el webhook por http://n8n:5678
+      WEBHOOK_URL: http://n8n:5678/
+      GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8ndata:/home/node/.n8n
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
+  n8ndata:

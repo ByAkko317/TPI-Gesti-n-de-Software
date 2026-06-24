@@ -1,0 +1,82 @@
+{
+  "name": "Peluquería - Recordatorio 24h",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
+        }
+      },
+      "id": "schedule",
+      "name": "Cada 1 hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://backend:8000/internal/reminders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "REEMPLAZAR_INTERNAL_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-reminders",
+      "name": "GET turnos a recordar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "split",
+      "name": "Separar turnos",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "peluqueria@tudominio.com",
+        "toEmail": "={{ $json.user.email }}",
+        "subject": "Recordatorio: tu turno es mañana",
+        "text": "=Hola {{ $json.user.first_name }},\n\nTe recordamos que tenés un turno de \"{{ $json.service.name }}\" mañana, {{ $json.start_at }}.\n\n¡Te esperamos!\nPeluquería",
+        "options": {}
+      },
+      "id": "mail-reminder",
+      "name": "Email recordatorio",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "credentials": {
+        "smtp": {
+          "id": "REEMPLAZAR_CREDENCIAL_SMTP",
+          "name": "SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada 1 hora": {
+      "main": [[{ "node": "GET turnos a recordar", "type": "main", "index": 0 }]]
+    },
+    "GET turnos a recordar": {
+      "main": [[{ "node": "Separar turnos", "type": "main", "index": 0 }]]
+    },
+    "Separar turnos": {
+      "main": [[{ "node": "Email recordatorio", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["peluqueria"]
+}
