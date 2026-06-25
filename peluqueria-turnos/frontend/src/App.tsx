@@ -7,6 +7,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { BookAppointment } from "./pages/BookAppointment";
 import { MyAppointments } from "./pages/MyAppointments";
+import { AdminPanel } from "./pages/AdminPanel";
 
 // Placeholders: las pantallas de turnos y panel se construyen en las próximas sub-etapas.
 function Placeholder({ title }: { title: string }) {
@@ -52,7 +53,7 @@ export default function App() {
               path="/admin"
               element={
                 <ProtectedRoute allow={["admin"]}>
-                  <Placeholder title="Panel admin" />
+                  <AdminPanel />
                 </ProtectedRoute>
               }
             />

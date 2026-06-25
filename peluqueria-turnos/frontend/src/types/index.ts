@@ -61,3 +61,19 @@ export interface LoginPayload {
   email: string;
   password: string;
 }
+
+export interface RevenueByService {
+  service_name: string;
+  appointments: number;
+  revenue: number;
+}
+
+export interface Analytics {
+  total_revenue: number;
+  confirmed_appointments: number;
+  cancelled_appointments: number;
+  total_clients: number;
+  new_clients: number;
+  new_clients_period_days: number;
+  revenue_by_service: RevenueByService[];
+}
