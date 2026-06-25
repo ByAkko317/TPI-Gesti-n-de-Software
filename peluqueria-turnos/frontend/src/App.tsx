@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { BookAppointment } from "./pages/BookAppointment";
 
 // Placeholders: las pantallas de turnos y panel se construyen en las próximas sub-etapas.
 function Placeholder({ title }: { title: string }) {
@@ -40,7 +41,7 @@ export default function App() {
               path="/sacar-turno"
               element={
                 <ProtectedRoute>
-                  <Placeholder title="Sacar turno" />
+                  <BookAppointment />
                 </ProtectedRoute>
               }
             />
