@@ -24,8 +24,12 @@ from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentRead,
 )
-from app.services.availability import AvailabilityError, validate_new_appointment
-from app.services.notifications import notify
+from app.services.availability import (
+    AvailabilityError,
+    business_tz,
+    validate_new_appointment,
+)
+from app.services.notifications import build_payload, notify
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -54,7 +58,7 @@ def create_appointment(
         )
 
     try:
-        end_at = validate_new_appointment(db, service, data.start_at)
+        start_at, end_at = validate_new_appointment(db, service, data.start_at)
     except AvailabilityError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=str(exc)
@@ -63,15 +67,17 @@ def create_appointment(
     appointment = Appointment(
         user_id=current_user.id,
         service_id=service.id,
-        start_at=data.start_at,
+        start_at=start_at,
         end_at=end_at,
         status=AppointmentStatus.confirmed,
     )
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
-    # Notificación de confirmación (no bloqueante, tras responder).
-    background.add_task(notify, "confirmation", appointment)
+    # Armamos el payload con la sesión todavía abierta y disparamos la
+    # notificación en segundo plano (no bloqueante, tras responder).
+    payload = build_payload("confirmation", appointment)
+    background.add_task(notify, payload)
     return appointment
 
 
@@ -95,8 +101,9 @@ def list_appointments(
         if client_id is not None:
             stmt = stmt.where(Appointment.user_id == client_id)
         if day is not None:
-            start = datetime.combine(day, time.min)
-            end = datetime.combine(day, time.max)
+            tz = business_tz()
+            start = datetime.combine(day, time.min).replace(tzinfo=tz)
+            end = datetime.combine(day, time.max).replace(tzinfo=tz)
             stmt = stmt.where(Appointment.start_at >= start).where(
                 Appointment.start_at <= end
             )
@@ -149,7 +156,8 @@ def cancel_appointment(
     appointment.cancellation_comment = data.comment
     db.commit()
     db.refresh(appointment)
-    # Notificación de cancelación; el payload incluye 'cancelled_by' para que
+    # Payload armado con la sesión abierta; incluye 'cancelled_by' para que
     # n8n use el mensaje correcto según quién canceló.
-    background.add_task(notify, "cancellation", appointment)
+    payload = build_payload("cancellation", appointment)
+    background.add_task(notify, payload)
     return appointment

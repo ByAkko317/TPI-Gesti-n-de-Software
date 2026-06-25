@@ -3,6 +3,10 @@
 Principio de diseño: el disparo es *tolerante a fallos*. Si n8n no está
 configurado o no responde, la operación de negocio (crear/cancelar turno)
 ya se completó y no debe verse afectada. Los errores solo se loguean.
+
+El payload se arma con `build_payload` mientras la sesión de base de datos
+sigue abierta (en el router). `notify` recibe el dict ya listo, así la tarea
+en segundo plano no toca el ORM con la sesión ya cerrada.
 """
 import logging
 
@@ -17,8 +21,11 @@ settings = get_settings()
 _TIMEOUT = httpx.Timeout(5.0)
 
 
-def _build_payload(event: str, appointment: Appointment) -> dict:
-    """Arma el payload con todo lo que n8n necesita para componer el correo."""
+def build_payload(event: str, appointment: Appointment) -> dict:
+    """Arma el payload con todo lo que n8n necesita para componer el correo.
+
+    Debe llamarse con la sesión de DB todavía abierta (accede a relaciones).
+    """
     user = appointment.user
     service = appointment.service
     return {
@@ -45,18 +52,23 @@ def _build_payload(event: str, appointment: Appointment) -> dict:
     }
 
 
-def notify(event: str, appointment: Appointment) -> None:
-    """Dispara un webhook a n8n. Nunca lanza excepción hacia el caller."""
+def notify(payload: dict) -> None:
+    """Dispara un webhook a n8n con el payload ya armado.
+
+    Nunca lanza excepción hacia el caller.
+    """
+    event = payload.get("event", "?")
+    appointment_id = payload.get("appointment", {}).get("id", "?")
+
     if not settings.n8n_webhook_url:
         logger.info("n8n no configurado; se omite notificación '%s'.", event)
         return
 
-    payload = _build_payload(event, appointment)
     try:
         httpx.post(settings.n8n_webhook_url, json=payload, timeout=_TIMEOUT)
-        logger.info("Notificación '%s' enviada para turno %s.", event, appointment.id)
+        logger.info("Notificación '%s' enviada para turno %s.", event, appointment_id)
     except httpx.HTTPError as exc:
         # No re-lanzamos: la creación/cancelación del turno ya se completó.
         logger.warning(
-            "Fallo al notificar '%s' del turno %s: %s", event, appointment.id, exc
+            "Fallo al notificar '%s' del turno %s: %s", event, appointment_id, exc
         )

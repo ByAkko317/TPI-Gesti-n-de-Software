@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
 
     # Reglas de negocio de turnos
+    # Zona horaria del negocio. Las horas que manda el cliente se interpretan
+    # en esta zona para todas las validaciones.
+    business_timezone: str = "America/Argentina/Buenos_Aires"
     # Horario de atención (hora local del negocio, formato 24h).
     opening_hour: int = 9
     closing_hour: int = 18
